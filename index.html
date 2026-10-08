@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Lead-Scoring Assistant</title>
+  <style>
+:root {
+  color-scheme: light;
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --surface-2: #eef3f5;
+  --ink: #152027;
+  --muted: #66737c;
+  --line: #d8e0e5;
+  --teal: #087f8c;
+  --teal-dark: #065f69;
+  --amber: #bd7600;
+  --green: #16824a;
+  --blue: #2869b8;
+  --red: #c2413d;
+  --shadow: 0 16px 40px rgba(23, 35, 45, 0.09);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: linear-gradient(180deg, #fbfcfd 0%, var(--bg) 45%, #eaf0f2 100%);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+  border-radius: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  font-weight: 700;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid rgba(8, 127, 140, 0.26);
+  outline-offset: 2px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
+  gap: 22px;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.sidebar,
+.workspace {
+  min-width: 0;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.brand-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--teal);
+  font-weight: 900;
+}
+
+.brand-block h1,
+.topbar h2,
+.panel h2,
+.table-header h2,
+.insights-panel h2,
+.recommendation h3 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.brand-block h1 {
+  font-size: 1.25rem;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--teal-dark);
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.panel,
+.table-panel,
+.insights-panel,
+.metric-card,
+.toolbar {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow);
+}
+
+.panel,
+.table-panel,
+.insights-panel {
+  border-radius: 8px;
+}
+
+.compact {
+  padding: 16px;
+}
+
+.panel-heading,
+.table-header,
+.topbar,
+.action-set,
+.button-row,
+.toolbar,
+.field-grid {
+  display: flex;
+  align-items: center;
+}
+
+.panel-heading,
+.table-header,
+.topbar {
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.panel h2,
+.table-header h2,
+.insights-panel h2 {
+  font-size: 1rem;
+}
+
+.count-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 9px;
+  border-radius: 999px;
+  color: var(--teal-dark);
+  background: #dff3f4;
+  font-size: 0.78rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.file-drop {
+  display: grid;
+  grid-template-columns: 52px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin: 14px 0 12px;
+  padding: 14px;
+  border: 1px dashed #a9bcc6;
+  border-radius: 8px;
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.file-drop small,
+.muted,
+.formula-list p,
+.recommendation p,
+.empty-state p,
+.table-header p {
+  color: var(--muted);
+}
+
+.file-drop small {
+  display: block;
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.file-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
+  color: #fff;
+  background: var(--blue);
+  font-weight: 900;
+  font-size: 0.8rem;
+}
+
+#csvInput {
+  inline-size: 1px;
+  block-size: 1px;
+  opacity: 0;
+  position: absolute;
+}
+
+.button-row,
+.action-set {
+  gap: 10px;
+}
+
+.primary {
+  color: #fff;
+  background: var(--teal);
+}
+
+.primary:hover {
+  background: var(--teal-dark);
+}
+
+.secondary {
+  color: var(--ink);
+  background: #dde8ed;
+}
+
+.ghost {
+  color: var(--muted);
+  background: transparent;
+}
+
+.lead-form {
+  display: grid;
+  gap: 11px;
+  margin-top: 12px;
+}
+
+label {
+  display: grid;
+  gap: 6px;
+  color: #42515b;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+input,
+select {
+  width: 100%;
+  border: 1px solid #cbd6dc;
+  border-radius: 6px;
+  min-height: 38px;
+  padding: 8px 10px;
+  color: var(--ink);
+  background: #fff;
+}
+
+.field-grid {
+  gap: 10px;
+}
+
+.field-grid > label {
+  flex: 1;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.topbar {
+  min-height: 68px;
+}
+
+.topbar h2 {
+  font-size: clamp(1.35rem, 2.4vw, 2rem);
+}
+
+.score-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.metric-card {
+  border-radius: 8px;
+  padding: 16px;
+  min-height: 112px;
+}
+
+.metric-card span,
+.metric-card small {
+  display: block;
+}
+
+.metric-card span {
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.metric-card strong {
+  display: block;
+  margin: 8px 0 4px;
+  font-size: 2rem;
+}
+
+.metric-card.hot {
+  border-top: 4px solid var(--green);
+}
+
+.metric-card.warm {
+  border-top: 4px solid var(--amber);
+}
+
+.metric-card.cold {
+  border-top: 4px solid var(--red);
+}
+
+.metric-card.average {
+  border-top: 4px solid var(--blue);
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 160px 220px;
+  gap: 12px;
+  align-items: end;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.search-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.search-wrap span {
+  color: #42515b;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 330px);
+  gap: 16px;
+  align-items: start;
+}
+
+.table-panel {
+  position: relative;
+  min-height: 480px;
+  overflow: hidden;
+}
+
+.table-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.table-header p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.table-scroll {
+  overflow: auto;
+  max-height: calc(100vh - 332px);
+  min-height: 360px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 880px;
+}
+
+th,
+td {
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  color: #52616b;
+  background: #f8fafb;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+td {
+  font-size: 0.9rem;
+}
+
+.lead-name strong,
+.fit-block strong,
+.score-value {
+  display: block;
+}
+
+.lead-name span,
+.fit-block span,
+.signal-line {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.score-bar {
+  width: 92px;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 99px;
+  background: #e3eaee;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--teal);
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-weight: 900;
+}
+
+.tier-hot {
+  color: #07552c;
+  background: #dff6e9;
+}
+
+.tier-warm {
+  color: #6f4300;
+  background: #fff1d8;
+}
+
+.tier-cold {
+  color: #802a26;
+  background: #fde4e2;
+}
+
+.empty-state {
+  display: none;
+  position: absolute;
+  inset: 84px 20px 20px;
+  place-content: center;
+  text-align: center;
+  border: 1px dashed #bdc9cf;
+  border-radius: 8px;
+  background: #f8fafb;
+}
+
+.empty-state.show {
+  display: grid;
+}
+
+.empty-state h3,
+.empty-state p {
+  margin: 0;
+}
+
+.empty-state p {
+  margin-top: 8px;
+}
+
+.insights-panel {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.muted {
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+.formula-list {
+  display: grid;
+  gap: 10px;
+}
+
+.formula-list div,
+.recommendation {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  background: #f8fafb;
+}
+
+.formula-list div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+}
+
+.formula-list span {
+  color: #42515b;
+  font-weight: 800;
+}
+
+.formula-list strong {
+  color: var(--teal-dark);
+}
+
+.formula-list p {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.4;
+}
+
+.recommendation h3 {
+  font-size: 1rem;
+}
+
+.recommendation p:last-child {
+  margin-bottom: 0;
+  line-height: 1.5;
+}
+
+.toast {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  transform: translateY(16px);
+  opacity: 0;
+  pointer-events: none;
+  max-width: min(360px, calc(100vw - 40px));
+  padding: 12px 14px;
+  border-radius: 8px;
+  color: #fff;
+  background: #1b2b34;
+  box-shadow: var(--shadow);
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+@media (max-width: 1120px) {
+  .app-shell,
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+
+  .brand-block {
+    grid-column: 1 / -1;
+  }
+
+  .table-scroll {
+    max-height: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    padding: 12px;
+  }
+
+  .sidebar,
+  .score-cards,
+  .toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .topbar,
+  .panel-heading,
+  .table-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .action-set,
+  .button-row,
+  .field-grid {
+    width: 100%;
+  }
+
+  .action-set button,
+  .button-row button {
+    flex: 1;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <aside class="sidebar" aria-label="Lead scoring controls">
+      <div class="brand-block">
+        <div class="brand-mark" aria-hidden="true">SL</div>
+        <div>
+          <p class="eyebrow">Sales ops workspace</p>
+          <h1>Lead-Scoring Assistant</h1>
+        </div>
+      </div>
+
+      <section class="panel compact">
+        <div class="panel-heading">
+          <h2>Import Leads</h2>
+          <span class="count-pill" id="leadCount">0 leads</span>
+        </div>
+        <label class="file-drop" for="csvInput">
+          <span class="file-icon" aria-hidden="true">CSV</span>
+          <span>
+            <strong>Upload lead data</strong>
+            <small>Accepts CSV with company, contact, industry, employees, revenue, visits, emails, demo, intent, source.</small>
+          </span>
+        </label>
+        <input id="csvInput" type="file" accept=".csv,text/csv">
+        <div class="button-row">
+          <button class="secondary" id="loadSampleBtn" type="button">Load Sample</button>
+          <button class="ghost" id="clearBtn" type="button">Clear</button>
+        </div>
+      </section>
+
+      <section class="panel compact">
+        <div class="panel-heading">
+          <h2>Add Lead</h2>
+        </div>
+        <form id="leadForm" class="lead-form">
+          <label>
+            Company
+            <input name="company" required placeholder="Northstar Systems">
+          </label>
+          <label>
+            Contact
+            <input name="contact" required placeholder="Ava Mehta">
+          </label>
+          <label>
+            Industry
+            <select name="industry">
+              <option>SaaS</option>
+              <option>Healthcare</option>
+              <option>Financial Services</option>
+              <option>Manufacturing</option>
+              <option>Retail</option>
+              <option>Education</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <div class="field-grid">
+            <label>
+              Employees
+              <input name="employees" type="number" min="1" value="250">
+            </label>
+            <label>
+              Revenue ($M)
+              <input name="revenue" type="number" min="0" step="0.1" value="25">
+            </label>
+          </div>
+          <div class="field-grid">
+            <label>
+              Site Visits
+              <input name="visits" type="number" min="0" value="8">
+            </label>
+            <label>
+              Email Opens
+              <input name="emails" type="number" min="0" value="3">
+            </label>
+          </div>
+          <div class="field-grid">
+            <label>
+              Demo Request
+              <select name="demo">
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+            <label>
+              Intent Score
+              <input name="intent" type="number" min="0" max="100" value="55">
+            </label>
+          </div>
+          <label>
+            Source
+            <select name="source">
+              <option>Website</option>
+              <option>Referral</option>
+              <option>Webinar</option>
+              <option>Paid Search</option>
+              <option>Outbound</option>
+              <option>Partner</option>
+            </select>
+          </label>
+          <button class="primary" type="submit">Add And Score Lead</button>
+        </form>
+      </section>
+    </aside>
+
+    <section class="workspace">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Predictive pipeline view</p>
+          <h2>Prioritize the next best conversations</h2>
+        </div>
+        <div class="action-set">
+          <button class="secondary" id="exportCsvBtn" type="button">Export CRM CSV</button>
+          <button class="primary" id="copySummaryBtn" type="button">Copy Summary</button>
+        </div>
+      </header>
+
+      <section class="score-cards" aria-label="Lead tier summary">
+        <article class="metric-card hot">
+          <span>Hot</span>
+          <strong id="hotCount">0</strong>
+          <small>Score 80-100</small>
+        </article>
+        <article class="metric-card warm">
+          <span>Warm</span>
+          <strong id="warmCount">0</strong>
+          <small>Score 55-79</small>
+        </article>
+        <article class="metric-card cold">
+          <span>Cold</span>
+          <strong id="coldCount">0</strong>
+          <small>Score 0-54</small>
+        </article>
+        <article class="metric-card average">
+          <span>Average Score</span>
+          <strong id="avgScore">0</strong>
+          <small>All active leads</small>
+        </article>
+      </section>
+
+      <section class="toolbar" aria-label="Lead filters">
+        <div class="search-wrap">
+          <span aria-hidden="true">Search</span>
+          <input id="searchInput" type="search" placeholder="Company, contact, industry, tier...">
+        </div>
+        <label>
+          Tier
+          <select id="tierFilter">
+            <option value="all">All</option>
+            <option value="Hot">Hot</option>
+            <option value="Warm">Warm</option>
+            <option value="Cold">Cold</option>
+          </select>
+        </label>
+        <label>
+          Sort
+          <select id="sortSelect">
+            <option value="score-desc">Score high to low</option>
+            <option value="score-asc">Score low to high</option>
+            <option value="company-asc">Company A-Z</option>
+            <option value="engagement-desc">Engagement high to low</option>
+          </select>
+        </label>
+      </section>
+
+      <section class="content-grid">
+        <div class="table-panel">
+          <div class="table-header">
+            <h2>Lead Queue</h2>
+            <p id="tableStatus">No leads loaded</p>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Lead</th>
+                  <th>Firmographic Fit</th>
+                  <th>Engagement</th>
+                  <th>Score</th>
+                  <th>Tier</th>
+                  <th>Next Action</th>
+                </tr>
+              </thead>
+              <tbody id="leadTableBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="emptyState">
+            <h3>No leads yet</h3>
+            <p>Upload a CSV, load sample leads, or add a lead manually to start scoring.</p>
+          </div>
+        </div>
+
+        <aside class="insights-panel">
+          <div>
+            <p class="eyebrow">Model</p>
+            <h2>Scoring Logic</h2>
+            <p class="muted">The model blends fit and buying behavior. Higher scores indicate stronger ICP match and near-term intent.</p>
+          </div>
+          <div class="formula-list">
+            <div>
+              <span>Firmographic</span>
+              <strong>40%</strong>
+              <p>Company size, revenue, and priority industries.</p>
+            </div>
+            <div>
+              <span>Engagement</span>
+              <strong>45%</strong>
+              <p>Visits, email opens, demo request, and intent.</p>
+            </div>
+            <div>
+              <span>Source Quality</span>
+              <strong>15%</strong>
+              <p>Referral, webinar, and website sources receive higher confidence.</p>
+            </div>
+          </div>
+          <div class="recommendation">
+            <p class="eyebrow">Recommended focus</p>
+            <h3 id="recommendationTitle">Load leads to see guidance</h3>
+            <p id="recommendationBody">Your highest scoring accounts and follow-up actions will appear here.</p>
+          </div>
+        </aside>
+      </section>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+const sampleLeads = [
+  {
+    company: "Northstar Systems",
+    contact: "Ava Mehta",
+    industry: "SaaS",
+    employees: 540,
+    revenue: 62,
+    visits: 18,
+    emails: 7,
+    demo: "yes",
+    intent: 88,
+    source: "Referral"
+  },
+  {
+    company: "Brightline Health",
+    contact: "Marcus Chen",
+    industry: "Healthcare",
+    employees: 1200,
+    revenue: 140,
+    visits: 9,
+    emails: 5,
+    demo: "yes",
+    intent: 76,
+    source: "Webinar"
+  },
+  {
+    company: "Copperfield Retail",
+    contact: "Nina Lopez",
+    industry: "Retail",
+    employees: 180,
+    revenue: 18,
+    visits: 4,
+    emails: 2,
+    demo: "no",
+    intent: 44,
+    source: "Paid Search"
+  },
+  {
+    company: "Orbit Financial",
+    contact: "Rohan Iyer",
+    industry: "Financial Services",
+    employees: 2600,
+    revenue: 310,
+    visits: 22,
+    emails: 10,
+    demo: "yes",
+    intent: 94,
+    source: "Partner"
+  },
+  {
+    company: "Pioneer Manufacturing",
+    contact: "Elena Brooks",
+    industry: "Manufacturing",
+    employees: 75,
+    revenue: 9,
+    visits: 2,
+    emails: 1,
+    demo: "no",
+    intent: 21,
+    source: "Outbound"
+  },
+  {
+    company: "Cedar Learning",
+    contact: "Imani Wells",
+    industry: "Education",
+    employees: 420,
+    revenue: 35,
+    visits: 11,
+    emails: 3,
+    demo: "no",
+    intent: 61,
+    source: "Website"
+  }
+];
+
+const state = {
+  leads: [],
+  query: "",
+  tier: "all",
+  sort: "score-desc"
+};
+
+const els = {
+  csvInput: document.querySelector("#csvInput"),
+  loadSampleBtn: document.querySelector("#loadSampleBtn"),
+  clearBtn: document.querySelector("#clearBtn"),
+  exportCsvBtn: document.querySelector("#exportCsvBtn"),
+  copySummaryBtn: document.querySelector("#copySummaryBtn"),
+  leadForm: document.querySelector("#leadForm"),
+  leadTableBody: document.querySelector("#leadTableBody"),
+  leadCount: document.querySelector("#leadCount"),
+  hotCount: document.querySelector("#hotCount"),
+  warmCount: document.querySelector("#warmCount"),
+  coldCount: document.querySelector("#coldCount"),
+  avgScore: document.querySelector("#avgScore"),
+  tableStatus: document.querySelector("#tableStatus"),
+  emptyState: document.querySelector("#emptyState"),
+  searchInput: document.querySelector("#searchInput"),
+  tierFilter: document.querySelector("#tierFilter"),
+  sortSelect: document.querySelector("#sortSelect"),
+  recommendationTitle: document.querySelector("#recommendationTitle"),
+  recommendationBody: document.querySelector("#recommendationBody"),
+  toast: document.querySelector("#toast")
+};
+
+const csvHeaders = [
+  "Company",
+  "Contact",
+  "Industry",
+  "Employees",
+  "Annual Revenue",
+  "Website Visits",
+  "Email Opens",
+  "Demo Requested",
+  "Intent Score",
+  "Lead Source",
+  "Lead Score",
+  "Tier",
+  "Next Action"
+];
+
+function clamp(number, min, max) {
+  return Math.max(min, Math.min(max, number));
+}
+
+function toNumber(value, fallback = 0) {
+  const parsed = Number(String(value ?? "").replace(/[$,]/g, "").trim());
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function normalizeLead(raw) {
+  const lead = {};
+  Object.entries(raw).forEach(([key, value]) => {
+    const normalizedKey = key.toLowerCase().replace(/[\s_-]/g, "");
+    lead[normalizedKey] = value;
+  });
+
+  return {
+    id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+    company: lead.company || lead.account || "Untitled Account",
+    contact: lead.contact || lead.name || lead.leadname || "Unknown Contact",
+    industry: lead.industry || "Other",
+    employees: toNumber(lead.employees || lead.companysize),
+    revenue: toNumber(lead.revenue || lead.annualrevenue || lead.revenuem || lead.arr),
+    visits: toNumber(lead.visits || lead.websitevisits || lead.sitevisits),
+    emails: toNumber(lead.emails || lead.emailopens || lead.opens),
+    demo: String(lead.demo || lead.demorequest || lead.demorequested || "no").toLowerCase().startsWith("y") ? "yes" : "no",
+    intent: clamp(toNumber(lead.intent || lead.intentscore), 0, 100),
+    source: lead.source || lead.leadsource || "Website"
+  };
+}
+
+function scoreLead(lead) {
+  const industryFit = {
+    SaaS: 100,
+    Healthcare: 88,
+    "Financial Services": 92,
+    Manufacturing: 70,
+    Retail: 62,
+    Education: 66,
+    Other: 50
+  };
+  const sourceFit = {
+    Referral: 100,
+    Partner: 92,
+    Webinar: 86,
+    Website: 78,
+    "Paid Search": 64,
+    Outbound: 48
+  };
+
+  const employeeFit = lead.employees >= 200 && lead.employees <= 3000
+    ? 100
+    : lead.employees > 3000
+      ? 78
+      : lead.employees >= 50
+        ? 68
+        : 42;
+  const revenueFit = lead.revenue >= 20 && lead.revenue <= 500
+    ? 100
+    : lead.revenue > 500
+      ? 80
+      : lead.revenue >= 5
+        ? 60
+        : 36;
+  const firmographic = Math.round(
+    employeeFit * 0.32 +
+    revenueFit * 0.28 +
+    (industryFit[lead.industry] || industryFit.Other) * 0.4
+  );
+
+  const engagement = Math.round(
+    clamp(lead.visits * 5, 0, 100) * 0.25 +
+    clamp(lead.emails * 9, 0, 100) * 0.18 +
+    (lead.demo === "yes" ? 100 : 20) * 0.27 +
+    lead.intent * 0.3
+  );
+  const source = sourceFit[lead.source] || 58;
+  const score = Math.round(firmographic * 0.4 + engagement * 0.45 + source * 0.15);
+  const tier = score >= 80 ? "Hot" : score >= 55 ? "Warm" : "Cold";
+
+  return {
+    ...lead,
+    firmographic,
+    engagement,
+    sourceScore: source,
+    score,
+    tier,
+    nextAction: getNextAction(tier, lead)
+  };
+}
+
+function getNextAction(tier, lead) {
+  if (tier === "Hot") {
+    return lead.demo === "yes"
+      ? "Route to AE today for demo follow-up"
+      : "Call within 24 hours and offer a tailored demo";
+  }
+  if (tier === "Warm") {
+    return "Add to nurture sequence and schedule SDR follow-up";
+  }
+  return "Keep in awareness campaign until engagement increases";
+}
+
+function getScoredLeads() {
+  const query = state.query.trim().toLowerCase();
+  return state.leads
+    .map(scoreLead)
+    .filter((lead) => {
+      const matchesTier = state.tier === "all" || lead.tier === state.tier;
+      const haystack = `${lead.company} ${lead.contact} ${lead.industry} ${lead.source} ${lead.tier}`.toLowerCase();
+      return matchesTier && (!query || haystack.includes(query));
+    })
+    .sort((a, b) => {
+      if (state.sort === "score-asc") return a.score - b.score;
+      if (state.sort === "company-asc") return a.company.localeCompare(b.company);
+      if (state.sort === "engagement-desc") return b.engagement - a.engagement;
+      return b.score - a.score;
+    });
+}
+
+function render() {
+  const visibleLeads = getScoredLeads();
+  const allScored = state.leads.map(scoreLead);
+  const counts = allScored.reduce((acc, lead) => {
+    acc[lead.tier] += 1;
+    return acc;
+  }, { Hot: 0, Warm: 0, Cold: 0 });
+  const average = allScored.length
+    ? Math.round(allScored.reduce((sum, lead) => sum + lead.score, 0) / allScored.length)
+    : 0;
+
+  els.leadCount.textContent = `${state.leads.length} ${state.leads.length === 1 ? "lead" : "leads"}`;
+  els.hotCount.textContent = counts.Hot;
+  els.warmCount.textContent = counts.Warm;
+  els.coldCount.textContent = counts.Cold;
+  els.avgScore.textContent = average;
+  els.tableStatus.textContent = visibleLeads.length
+    ? `${visibleLeads.length} shown, ${state.leads.length} total`
+    : state.leads.length
+      ? "No leads match the current filters"
+      : "No leads loaded";
+
+  els.emptyState.classList.toggle("show", visibleLeads.length === 0);
+  els.leadTableBody.innerHTML = visibleLeads.map(renderLeadRow).join("");
+  renderRecommendation(allScored);
+}
+
+function renderLeadRow(lead) {
+  return `
+    <tr>
+      <td>
+        <div class="lead-name">
+          <strong>${escapeHtml(lead.company)}</strong>
+          <span>${escapeHtml(lead.contact)} - ${escapeHtml(lead.industry)}</span>
+        </div>
+      </td>
+      <td>
+        <div class="fit-block">
+          <strong>${lead.firmographic}/100</strong>
+          <span>${lead.employees.toLocaleString()} employees - $${lead.revenue.toLocaleString()}M revenue</span>
+        </div>
+      </td>
+      <td>
+        <strong>${lead.engagement}/100</strong>
+        <span class="signal-line">${lead.visits} visits - ${lead.emails} opens - Demo ${lead.demo}</span>
+      </td>
+      <td>
+        <strong class="score-value">${lead.score}</strong>
+        <div class="score-bar" aria-hidden="true">
+          <div class="score-fill" style="width: ${lead.score}%"></div>
+        </div>
+      </td>
+      <td><span class="tier-badge tier-${lead.tier.toLowerCase()}">${lead.tier}</span></td>
+      <td>${escapeHtml(lead.nextAction)}</td>
+    </tr>
+  `;
+}
+
+function renderRecommendation(leads) {
+  if (!leads.length) {
+    els.recommendationTitle.textContent = "Load leads to see guidance";
+    els.recommendationBody.textContent = "Your highest scoring accounts and follow-up actions will appear here.";
+    return;
+  }
+
+  const sorted = [...leads].sort((a, b) => b.score - a.score);
+  const top = sorted[0];
+  const hotCount = sorted.filter((lead) => lead.tier === "Hot").length;
+  els.recommendationTitle.textContent = `${top.company} is your top account`;
+  els.recommendationBody.textContent = `${top.contact} scored ${top.score} (${top.tier}). ${top.nextAction}. You currently have ${hotCount} hot ${hotCount === 1 ? "lead" : "leads"} ready for immediate attention.`;
+}
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"' && inQuotes && next === '"') {
+      field += '"';
+      i += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      row.push(field.trim());
+      field = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") i += 1;
+      row.push(field.trim());
+      if (row.some(Boolean)) rows.push(row);
+      row = [];
+      field = "";
+    } else {
+      field += char;
+    }
+  }
+
+  row.push(field.trim());
+  if (row.some(Boolean)) rows.push(row);
+
+  if (rows.length < 2) return [];
+  const headers = rows[0];
+  return rows.slice(1).map((cells) => {
+    return headers.reduce((record, header, index) => {
+      record[header] = cells[index] || "";
+      return record;
+    }, {});
+  });
+}
+
+function toCsv(rows) {
+  return rows
+    .map((row) => row.map((cell) => {
+      const value = String(cell ?? "");
+      return /[",\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+    }).join(","))
+    .join("\n");
+}
+
+function exportCsv() {
+  const rows = getScoredLeads();
+  if (!rows.length) {
+    showToast("No leads available to export.");
+    return;
+  }
+
+  const data = [
+    csvHeaders,
+    ...rows.map((lead) => [
+      lead.company,
+      lead.contact,
+      lead.industry,
+      lead.employees,
+      lead.revenue,
+      lead.visits,
+      lead.emails,
+      lead.demo,
+      lead.intent,
+      lead.source,
+      lead.score,
+      lead.tier,
+      lead.nextAction
+    ])
+  ];
+  const blob = new Blob([toCsv(data)], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "crm-lead-scores.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+  showToast("CRM export downloaded.");
+}
+
+function copySummary() {
+  const leads = state.leads.map(scoreLead);
+  if (!leads.length) {
+    showToast("No summary to copy yet.");
+    return;
+  }
+
+  const hot = leads.filter((lead) => lead.tier === "Hot").length;
+  const warm = leads.filter((lead) => lead.tier === "Warm").length;
+  const cold = leads.filter((lead) => lead.tier === "Cold").length;
+  const top = [...leads].sort((a, b) => b.score - a.score).slice(0, 3);
+  const summary = [
+    `Lead scoring summary: ${leads.length} leads, ${hot} hot, ${warm} warm, ${cold} cold.`,
+    "Top accounts:",
+    ...top.map((lead, index) => `${index + 1}. ${lead.company} - ${lead.score} (${lead.tier}) - ${lead.nextAction}`)
+  ].join("\n");
+
+  navigator.clipboard.writeText(summary)
+    .then(() => showToast("Summary copied to clipboard."))
+    .catch(() => showToast(summary));
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+let toastTimer;
+function showToast(message) {
+  clearTimeout(toastTimer);
+  els.toast.textContent = message;
+  els.toast.classList.add("show");
+  toastTimer = setTimeout(() => els.toast.classList.remove("show"), 2600);
+}
+
+els.loadSampleBtn.addEventListener("click", () => {
+  state.leads = sampleLeads.map(normalizeLead);
+  render();
+  showToast("Sample lead data loaded.");
+});
+
+els.clearBtn.addEventListener("click", () => {
+  state.leads = [];
+  els.csvInput.value = "";
+  render();
+  showToast("Lead queue cleared.");
+});
+
+els.csvInput.addEventListener("change", (event) => {
+  const [file] = event.target.files;
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const records = parseCsv(String(reader.result || ""));
+    state.leads = records.map(normalizeLead);
+    render();
+    showToast(`${state.leads.length} leads imported and scored.`);
+  };
+  reader.readAsText(file);
+});
+
+els.leadForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  const lead = normalizeLead(Object.fromEntries(formData.entries()));
+  state.leads = [lead, ...state.leads];
+  event.currentTarget.reset();
+  render();
+  showToast(`${lead.company} added to the lead queue.`);
+});
+
+els.searchInput.addEventListener("input", (event) => {
+  state.query = event.target.value;
+  render();
+});
+
+els.tierFilter.addEventListener("change", (event) => {
+  state.tier = event.target.value;
+  render();
+});
+
+els.sortSelect.addEventListener("change", (event) => {
+  state.sort = event.target.value;
+  render();
+});
+
+els.exportCsvBtn.addEventListener("click", exportCsv);
+els.copySummaryBtn.addEventListener("click", copySummary);
+
+render();
+
+  </script>
+</body>
+</html>
